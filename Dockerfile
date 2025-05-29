@@ -7,6 +7,7 @@ WORKDIR /app
 # Install system dependencies, including ffmpeg
 RUN apt-get update && apt-get install -y \
     ffmpeg \
+    flac \
     # Add any other system dependencies if needed
     && rm -rf /var/lib/apt/lists/*
 
