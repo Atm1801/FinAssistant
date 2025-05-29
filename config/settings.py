@@ -7,6 +7,7 @@ class Settings:
     # API Keys
     ALPHA_VANTAGE_API_KEY: str = os.getenv("ALPHA_VANTAGE_API_KEY", "34OCFR8ZF9UVYG7R")
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "AIzaSyDD8-zVBGKoERFYdDNoYDG4B2NSqQmQE0E") # For Gemini
+    NEWS_API_KEY: str = os.getenv("NEWS_API_KEY", "5aa3c526ae244c24bf6e27638073eb44") # Example key, replace with actual
 
     # FastAPI Ports
     API_AGENT_PORT: int = 8001

@@ -1,90 +1,72 @@
+# streamlit_app.py
 import streamlit as st
 import requests
-import base64
 import json
-import io
-import numpy as np # For audio playback workaround on Streamlit
-import soundfile as sf
-import pydub
 
-# Assume orchestrator is running on 8000
-ORCHESTRATOR_URL = "http://localhost:8000/orchestrate/market_brief/"
+st.set_page_config(layout="wide")
 
-st.set_page_config(layout="wide", page_title="Finance Assistant")
+# Backend API endpoints (replace with your actual orchestrator URL if different)
+ORCHESTRATOR_URL = "http://localhost:8000"
 
-st.title("🗣️ AI Finance Assistant: Morning Market Brief")
+st.title("📈 AI-Powered Financial Market Brief Generator")
 
 st.markdown("""
-Welcome to your AI Finance Assistant! Ask about your risk exposure in Asia tech stocks and any earnings surprises.
+Welcome to your AI Financial Analyst! Ask a question about the market, specific stocks, or your portfolio, and I'll generate a comprehensive brief for you.
 """)
 
-# Input method selection
-input_method = st.radio("Choose Input Method:", ("Text Input", "Voice Input"))
+# User input for the question
+user_question = st.text_area(
+    "What financial insights are you looking for today? (e.g., 'Analyze MSFT and GOOGL performance today and recent news.', 'What's the current market sentiment?', 'How did NVDA perform historically?')",
+    height=100,
+    key="user_question_input"
+)
 
-brief_text = ""
-audio_brief_bytes = None
+# User input for portfolio data (optional)
+st.subheader("Optional: Your Portfolio Initial Data")
+st.markdown("Provide initial allocation data to get a personalized analysis. (e.g., `{\"MSFT\": 0.3, \"GOOGL\": 0.2, \"Other\": 0.5}`)")
+portfolio_input_str = st.text_area(
+    "Enter your portfolio data as a JSON object (or leave empty):",
+    value="{}", # <-- Changed default value to an empty JSON object
+    height=100,
+    key="portfolio_input"
+)
 
-if input_method == "Text Input":
-    user_question = st.text_area(
-        "Enter your question:",
-        "What’s our risk exposure in Asia tech stocks today, and highlight any earnings surprises?"
-    )
-    if st.button("Get Market Brief (Text)"):
-        if user_question:
-            with st.spinner("Generating brief..."):
-                try:
-                    response = requests.post(
-                        ORCHESTRATOR_URL,
-                        json={"query_text": user_question}
-                    )
-                    response.raise_for_status()
-                    brief_data = response.json()
-                    brief_text = brief_data.get("brief_text", "No brief generated.")
-                    if brief_data.get("audio_brief_base64"):
-                        audio_brief_bytes = base64.b64decode(brief_data["audio_brief_base64"])
-                except requests.exceptions.ConnectionError:
-                    st.error("Could not connect to the orchestrator. Please ensure all FastAPI services are running.")
-                except requests.exceptions.HTTPError as e:
-                    st.error(f"HTTP Error: {e.response.status_code} - {e.response.text}")
-                except Exception as e:
-                    st.error(f"An error occurred: {e}")
-        else:
-            st.warning("Please enter a question.")
+portfolio_data = {}
+if portfolio_input_str:
+    try:
+        portfolio_data = json.loads(portfolio_input_str)
+    except json.JSONDecodeError:
+        st.error("Invalid JSON format for portfolio data. Please enter a valid JSON object.")
+        portfolio_data = None # Indicate invalid data
 
-elif input_method == "Voice Input":
-    audio_file = st.file_uploader("Upload your audio question (WAV format recommended):", type=["wav", "mp3"])
+if st.button("Generate Market Brief", type="primary"):
+    if not user_question:
+        st.warning("Please enter a question to get a market brief.")
+    elif portfolio_data is not None:
+        with st.spinner("Generating your market brief... This may take a moment as AI analyzes current data and news."):
+            try:
+                # Prepare the request payload
+                payload = {
+                    "question": user_question,
+                    "portfolio_initial_data": portfolio_data
+                }
+                headers = {"Content-Type": "application/json"}
 
-    if st.button("Get Market Brief (Voice)"):
-        if audio_file:
-            with st.spinner("Processing voice input and generating brief..."):
-                try:
-                    # Convert audio to base64
-                    audio_bytes = audio_file.read()
-                    audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+                # Send request to the Orchestrator
+                response = requests.post(f"{ORCHESTRATOR_URL}/orchestrate/generate_brief/", json=payload, headers=headers)
+                response.raise_for_status() # Raise an exception for HTTP errors (4xx or 5xx)
+                
+                brief_data = response.json()
+                st.subheader("📊 Your Market Brief:")
+                st.markdown(brief_data.get("brief", "No brief could be generated at this time. Please check your inputs or try again later."))
 
-                    response = requests.post(
-                        ORCHESTRATOR_URL,
-                        json={"audio_file_base64": audio_base64}
-                    )
-                    response.raise_for_status()
-                    brief_data = response.json()
-                    brief_text = brief_data.get("brief_text", "No brief generated.")
-                    if brief_data.get("audio_brief_base64"):
-                        audio_brief_bytes = base64.b64decode(brief_data["audio_brief_base64"])
+            except requests.exceptions.ConnectionError:
+                st.error("Could not connect to the backend API. Please ensure all agents and the orchestrator are running.")
+            except requests.exceptions.HTTPError as e:
+                st.error(f"Error from API: {e}. Detail: {e.response.json().get('detail', 'No additional detail.')}")
+            except Exception as e:
+                st.error(f"An unexpected error occurred: {e}")
+    else:
+        st.info("Please correct the portfolio data JSON format before generating the brief.")
 
-                except requests.exceptions.ConnectionError:
-                    st.error("Could not connect to the orchestrator. Please ensure all FastAPI services are running.")
-                except requests.exceptions.HTTPError as e:
-                    st.error(f"HTTP Error: {e.response.status_code} - {e.response.text}")
-                except Exception as e:
-                    st.error(f"An error occurred: {e}")
-        else:
-            st.warning("Please upload an audio file.")
-
-if brief_text:
-    st.subheader("Market Brief:")
-    st.write(brief_text)
-
-    if audio_brief_bytes:
-        st.subheader("Listen to the Brief:")
-        st.audio(audio_brief_bytes, format='audio/mpeg') # gTTS produces MP3
+st.markdown("---")
