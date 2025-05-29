@@ -1,0 +1,16 @@
+streamlit>=1.0.0
+fastapi>=0.100.0
+uvicorn>=0.23.2
+langchain>=0.2.0
+langchain-google-genai>=0.0.12 # Or the latest version
+langgraph>=0.0.30
+faiss-cpu>=1.7.4 # or faiss-gpu if you have a GPU
+pypdf>=3.17.1 # For PDF document loading
+unstructured>=0.12.6 # For general document loading
+beautifulsoup4>=4.12.2
+requests>=2.31.0
+python-dotenv>=1.0.0
+gTTS>=2.4.0
+SpeechRecognition>=3.10.0
+soundfile>=0.12.1 # Often a dependency for audio processing
+pydub>=0.25.1 # For audio manipulation (optional, but useful)
