@@ -1,5 +1,15 @@
 # AI-Powered Financial Market Brief Generator
 
+## Demos
+
+### 1. Voice Input
+
+https://github.com/user-attachments/assets/0e70a9a1-58e1-49e8-9afd-23425da0e2a8
+
+### 2. Text Input
+
+https://github.com/user-attachments/assets/9bdcaa7e-6b0d-474a-8a93-c3bda75b5e6e
+
 ## Pubically Hosted Site
  Unfortunately my free-tier plan for the cloud service I was using for deployment has expired, leading to the temporary suspension of the live link. I am actively exploring alternate deployment methods to bring the service back online as soon as possible. I will provide an update here as soon as a new live version is available.
 
